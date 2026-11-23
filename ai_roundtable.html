@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10131d">
+<title>AI Roundtable</title>
+<style>
+:root{color-scheme:dark;--bg:#10131d;--panel:#191e2b;--panel2:#202738;--line:#30394d;--text:#f4f6fb;--muted:#aab3c5;--accent:#a78bfa;--green:#8bd5a8}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -10%,#35305b 0,transparent 34%),var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:850px;margin:auto;padding:20px 14px 34px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.brand{font-size:22px;font-weight:800;letter-spacing:-.5px}.tag{font-size:12px;color:var(--green);border:1px solid #426b56;border-radius:30px;padding:5px 9px}
+.panel{background:linear-gradient(145deg,#1b2130,#171c28);border:1px solid var(--line);border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 12px 35px #0002}
+h2{font-size:16px;margin:0 0 10px}p{color:var(--muted);margin:5px 0 10px;font-size:14px}
+input,textarea,button{font:inherit}input,textarea{width:100%;background:#111622;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:12px;outline:none}textarea{resize:vertical;min-height:70px}
+button{border:0;border-radius:12px;padding:11px 14px;font-weight:700;background:var(--accent);color:#151323;cursor:pointer}button.secondary{background:#30394d;color:var(--text)}button.stop{background:#623d4b;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.people{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.person{background:#202738;border:1px solid var(--line);border-radius:13px;padding:10px}.person b{display:block;font-size:14px}.person span{color:var(--muted);font-size:12px}
+.status{font-size:13px;color:var(--muted);padding:8px 2px;min-height:28px}.chat{display:flex;flex-direction:column;gap:10px;min-height:190px;max-height:55vh;overflow:auto;padding:4px}.msg{max-width:94%;border:1px solid var(--line);background:#202738;padding:11px 13px;border-radius:14px;align-self:flex-start;white-space:pre-wrap;overflow-wrap:anywhere}.msg.user{align-self:flex-end;background:#30294c;border-color:#594b84}.who{font-size:12px;font-weight:800;color:#c4b5fd;margin-bottom:4px}.msg.user .who{color:#d6c9ff}.empty{color:var(--muted);text-align:center;padding:30px 10px;font-size:14px}
+.small{font-size:12px;color:var(--muted)}.meter{height:6px;border-radius:9px;background:#30394d;overflow:hidden;margin-top:7px}.meter i{display:block;width:0;height:100%;background:var(--green);transition:width .3s}
+footer{color:#8993a8;font-size:12px;padding:8px 2px}a{color:#c4b5fd}
+@media(max-width:430px){main{padding:15px 11px 28px}.people{gap:6px}.person{padding:8px}.brand{font-size:20px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><div class="brand">◈ AI Roundtable</div><div class="tag">LOCAL AI · NO API KEY</div></div>
+  <section class="panel">
+    <h2>Your discussion</h2>
+    <p>Choose a topic, then start a moderated discussion between three AI roles. You can join in at any time.</p>
+    <input id="topic" maxlength="240" value="Should schools teach practical life skills as a core subject?" aria-label="Discussion topic">
+    <div class="people" style="margin-top:12px">
+      <div class="person"><b>Alex</b><span>Analyst · weighs evidence</span></div>
+      <div class="person"><b>Drew</b><span>Debater · challenges ideas</span></div>
+      <div class="person"><b>Casey</b><span>Critic · spots weaknesses</span></div>
+    </div>
+    <div class="actions">
+      <button id="load">Load AI model</button>
+      <button id="start" class="secondary" disabled>Start discussion</button>
+      <button id="pause" class="secondary" disabled>Pause</button>
+      <button id="stop" class="stop" disabled>Stop</button>
+      <button id="new" class="secondary">New chat</button>
+    </div>
+    <div class="status" id="status" role="status">Model not loaded. Loading it requires an internet connection the first time.</div>
+    <div class="meter"><i id="progress"></i></div>
+    <div class="small" id="progressText">Model downloads and runs in this browser; it may use substantial memory.</div>
+  </section>
+  <section class="panel">
+    <h2>Conversation</h2>
+    <div id="chat" class="chat"><div class="empty">Your roundtable will appear here. Load the model to begin.</div></div>
+    <div class="actions">
+      <button id="save" class="secondary">Export chat</button>
+      <button id="clear" class="secondary">Clear chat</button>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>Join the discussion</h2>
+    <textarea id="userText" maxlength="1200" placeholder="Add your point, ask a question, or challenge one of the AIs…"></textarea>
+    <div class="actions"><button id="send" disabled>Send to the group</button></div>
+  </section>
+  <footer>One shared model powers all three roles. This prototype loads model files from Hugging Face, not from the copies in your iPhone Downloads folder. It is not a cloud chat service: generation happens on your device. Safari may pause or clear cached model files, and performance is not guaranteed.</footer>
+</main>
+<script type="module">
+const MODEL_ID = "Xenova/Qwen1.5-0.5B-Chat";
+let generator = null, busy = false, paused = false, stopped = false, turn = 0;
+const maxTurns = 12;
+const $ = id => document.getElementById(id);
+const chat = $("chat");
+const transcript = [];
+const roles = [
+ {name:"Alex",style:"You are Alex, a careful analyst. Identify the key issue, clarify assumptions, and give a balanced evidence-minded view. Be concise."},
+ {name:"Drew",style:"You are Drew, a lively but respectful debater. Challenge the previous point, offer a counterargument, and explain your reasoning. Be concise."},
+ {name:"Casey",style:"You are Casey, a constructive critic. Find gaps, trade-offs, unintended consequences, and suggest how the ideas could improve. Be concise."}
+];
+function status(s){$("status").textContent=s}
+function addMessage(name,text,isUser=false){
+  const empty=chat.querySelector(".empty"); if(empty) empty.remove();
+  const el=document.createElement("div"); el.className="msg"+(isUser?" user":"");
+  const who=document.createElement("div"); who.className="who"; who.textContent=name;
+  const body=document.createElement("div"); body.textContent=text;
+  el.append(who,body); chat.append(el); chat.scrollTop=chat.scrollHeight;
+  transcript.push({name,text,time:new Date().toISOString()});
+}
+function saveHistory(){try{localStorage.setItem("roundtable-history",JSON.stringify(transcript.slice(-100)))}catch(e){}}
+function latestContext(){return transcript.slice(-8).map(x=>x.name+": "+x.text).join("\n\n")}
+async function loadModel(){
+  if(generator)return;
+  $("load").disabled=true; status("Preparing the model… first load may take a while.");
+  try{
+    const {pipeline,env}=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
+    env.useBrowserCache=true;
+    generator=await pipeline("text-generation",MODEL_ID,{dtype:"uint8",device:"wasm",progress_callback:(p)=>{
+      if(p.status==="progress" && p.total){const pct=Math.round(100*p.loaded/p.total);$("progress").style.width=pct+"%";$("progressText").textContent=(p.file||"Model file")+": "+pct+"%"}
+      else if(p.status==="done"){$("progress").style.width="100%"}
+      else if(p.status==="initiate") status("Downloading "+(p.file||"model files")+"…");
+    }});
+    status("Model loaded. You can start a discussion.");
+    $("start").disabled=false;$("send").disabled=false;
+    $("progressText").textContent="Model ready in this tab.";
+  }catch(e){
+    console.error(e);status("Couldn't load the model: "+(e?.message||String(e))+". Check your connection and try again.");
+    $("load").disabled=false;
+  }
+}
+async function generate(role){
+  const context=latestContext()||"No discussion yet.";
+  const prompt=[
+    {role:"system",content:role.style+" Discuss the topic: "+$("topic").value+". Stay respectful, avoid pretending to have personal experiences, and keep the answer to 2–4 sentences. Do not repeat previous statements."},
+    {role:"user",content:"Here is the discussion so far:\n"+context+"\n\nMake your next contribution to the group."}
+  ];
+  const out=await generator(prompt,{max_new_tokens:100,do_sample:true,temperature:0.8,top_p:0.9,return_full_text:false});
+  let answer=out?.[0]?.generated_text;
+  if(Array.isArray(answer)) answer=answer.at(-1)?.content;
+  if(typeof answer!=="string") answer=String(answer??"I couldn't produce a response.");
+  return answer.trim();
+}
+async function runDiscussion(){
+ if(!generator||busy)return;
+ busy=true;paused=false;stopped=false;
+ $("pause").disabled=false;$("stop").disabled=false;$("start").disabled=true;
+ while(!stopped&&!paused&&turn<maxTurns){
+   const role=roles[turn%3];status(role.name+" is thinking…");
+   try{const answer=await generate(role);if(stopped)break;addMessage(role.name,answer);saveHistory();turn++;}
+   catch(e){status("Generation error: "+(e?.message||String(e)));break}
+ }
+ if(turn>=maxTurns)status("This discussion reached the 12-turn limit. Start a new chat for another round.");
+ else if(paused)status("Discussion paused. Tap Start discussion to continue.");
+ else if(stopped)status("Discussion stopped.");
+ else status("Discussion ended.");
+ busy=false;$("pause").disabled=true;$("stop").disabled=true;$("start").disabled=!generator;
+}
+$("load").addEventListener("click",loadModel);
+$("start").addEventListener("click",()=>{if(paused){paused=false;runDiscussion()}else runDiscussion()});
+$("pause").addEventListener("click",()=>{paused=true;$("pause").disabled=true});
+$("stop").addEventListener("click",()=>{stopped=true;paused=false});
+$("new").addEventListener("click",()=>{stopped=true;paused=false;turn=0;transcript.length=0;chat.innerHTML='<div class="empty">New discussion ready. Start when you are ready.</div>';status(generator?"Model ready.":"Model not loaded.");});
+$("clear").addEventListener("click",()=>{transcript.length=0;chat.innerHTML='<div class="empty">Chat cleared.</div>';try{localStorage.removeItem("roundtable-history")}catch(e){}});
+$("send").addEventListener("click",()=>{const t=$("userText").value.trim();if(!t)return;addMessage("You",t,true);$("userText").value="";saveHistory();if(!busy&&generator)status("Your message has been added. Tap Start discussion to continue.");});
+$("save").addEventListener("click",()=>{
+ const blob=new Blob([transcript.map(x=>`[${x.time}] ${x.name}\n${x.text}`).join("\n\n")],{type:"text/plain"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="ai-roundtable-chat.txt";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+</script>
+</body>
+</html>
