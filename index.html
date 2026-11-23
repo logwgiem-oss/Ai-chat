@@ -2,340 +2,606 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Roundtable</title>
-<style>
-body {
-  margin: 0;
-  padding: 18px;
-  background: #10131d;
-  color: white;
-  font-family: system-ui, sans-serif;
-}
-main { max-width: 700px; margin: auto; }
-h1 { color: #c4b5fd; }
-.panel {
-  background: #202738;
-  padding: 16px;
-  border-radius: 15px;
-  margin: 14px 0;
-}
-input, textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  border-radius: 9px;
-  border: 1px solid #48516a;
-  background: #111622;
-  color: white;
-  margin: 6px 0;
-  font: inherit;
-}
-button {
-  padding: 11px 14px;
-  border: 0;
-  border-radius: 9px;
-  background: #a78bfa;
-  color: #171323;
-  font-weight: bold;
-  margin: 5px 4px 5px 0;
-}
-button:disabled { opacity: .45; }
-#status { color: #b9c2d4; font-size: 14px; }
-#chat {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 55vh;
-  overflow-y: auto;
-}
-.message {
-  background: #30394d;
-  padding: 12px;
-  border-radius: 12px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.user { background: #443568; }
-.name { color: #c4b5fd; font-weight: bold; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>AI Roundtable</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #111827;
+      color: #f9fafb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      max-width: 760px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #9ca3af;
+      margin-top: 0;
+      margin-bottom: 22px;
+    }
+
+    .panel {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .status {
+      color: #93c5fd;
+      font-size: 14px;
+      min-height: 20px;
+      margin-top: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 14px;
+      margin: 4px 3px 4px 0;
+      background: #374151;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: #2563eb;
+    }
+
+    button.stop {
+      background: #b91c1c;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 90px;
+      resize: vertical;
+      background: #111827;
+      border: 1px solid #4b5563;
+      border-radius: 10px;
+      color: white;
+      padding: 12px;
+      font: inherit;
+      font-size: 16px;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #60a5fa;
+    }
+
+    .chat {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 100px;
+      max-height: 55vh;
+      overflow-y: auto;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 10px;
+      background: #374151;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .message.user {
+      background: #1e40af;
+    }
+
+    .message.alex {
+      border-left: 4px solid #60a5fa;
+    }
+
+    .message.drew {
+      border-left: 4px solid #c084fc;
+    }
+
+    .message.casey {
+      border-left: 4px solid #fbbf24;
+    }
+
+    .speaker {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #9ca3af;
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+  </style>
 </head>
+
 <body>
-<main>
-<h1>◈ AI Roundtable</h1>
-<p>Alex, Drew and Casey — three AI personalities, one shared model.</p>
+  <main class="app">
+    <h1>AI Roundtable</h1>
+    <p class="subtitle">Three AI personalities. One conversation.</p>
 
-<section class="panel">
-  <h3>Discussion topic</h3>
-  <input id="topic" value="Should schools teach practical life skills?">
+    <section class="panel">
+      <h3>1. Load the AI model</h3>
+      <p class="small">
+        The model runs in your browser. Its first download may take a while.
+        Keep this page open while it loads.
+      </p>
 
-  <button id="load">Load AI model</button>
-  <button id="start" disabled>Start discussion</button>
-  <button id="pause" disabled>Pause</button>
-  <button id="stop" disabled>Stop</button>
+      <button class="primary" id="loadButton">
+        Load AI model
+      </button>
 
-  <p id="status">AI model not loaded.</p>
-  <progress id="progress" value="0" max="100" style="width:100%"></progress>
-</section>
+      <div class="status" id="status">Model not loaded.</div>
+    </section>
 
-<section class="panel">
-  <h3>Meet the group</h3>
-  <p><b>Alex:</b> The analyst</p>
-  <p><b>Drew:</b> The debater</p>
-  <p><b>Casey:</b> The critic</p>
-</section>
+    <section class="panel">
+      <h3>2. Conversation</h3>
+      <div class="chat" id="chat">
+        <div class="message">
+          <div class="speaker">AI Roundtable</div>
+          Load the model, then send a message to begin.
+        </div>
+      </div>
+    </section>
 
-<section class="panel">
-  <h3>Conversation</h3>
-  <div id="chat">The discussion will appear here.</div>
-</section>
+    <section class="panel">
+      <h3>3. Talk to the AIs</h3>
 
-<section class="panel">
-  <h3>Your message</h3>
-  <textarea id="userMessage" rows="3"
-    placeholder="Join the discussion..."></textarea>
-  <button id="send" disabled>Send message</button>
-  <button id="export">Export conversation</button>
-  <button id="new">New discussion</button>
-</section>
-</main>
+      <textarea
+        id="messageInput"
+        placeholder="Write a message for Alex, Drew and Casey..."
+      ></textarea>
 
-<script type="module">
-const MODEL =
-  "onnx-community/SmolLM2-135M-Instruct-ONNX-MHA";
+      <div class="controls">
+        <button class="primary" id="sendButton" disabled>
+          Send message
+        </button>
 
-let ai = null;
-let running = false;
-let paused = false;
-let stopped = false;
-let turn = 0;
-const maxTurns = 9;
-const history = [];
+        <button id="discussButton" disabled>
+          Start discussion
+        </button>
 
-const roles = [
-  {
-    name: "Alex",
-    instruction:
-      "You are Alex, a thoughtful analyst. Explain the issue logically and consider evidence."
-  },
-  {
-    name: "Drew",
-    instruction:
-      "You are Drew, a respectful debater. Challenge the previous argument and offer another perspective."
-  },
-  {
-    name: "Casey",
-    instruction:
-      "You are Casey, a constructive critic. Identify weaknesses, missing details and possible improvements."
-  }
-];
+        <button id="pauseButton" disabled>
+          Pause
+        </button>
 
-const $ = id => document.getElementById(id);
+        <button class="stop" id="stopButton" disabled>
+          Stop
+        </button>
+      </div>
+    </section>
 
-function setStatus(message) {
-  $("status").textContent = message;
-}
+    <section class="panel">
+      <h3>4. Chat controls</h3>
 
-function addMessage(name, text) {
-  const chat = $("chat");
+      <div class="controls">
+        <button id="exportButton">Export conversation</button>
+        <button id="newChatButton">New conversation</button>
+      </div>
 
-  if (history.length === 0) chat.innerHTML = "";
+      <p class="small">
+        The conversation is kept in this page while it is open.
+        Export it if you want to save a copy.
+      </p>
+    </section>
 
-  const box = document.createElement("div");
-  box.className = "message" + (name === "You" ? " user" : "");
+    <section class="panel">
+      <h3>Meet the AIs</h3>
+      <p><strong>Alex — Analyst</strong><br>
+        Looks at evidence, logic and practical details.</p>
 
-  const heading = document.createElement("div");
-  heading.className = "name";
-  heading.textContent = name;
+      <p><strong>Drew — Debater</strong><br>
+        Challenges ideas and explores alternative viewpoints.</p>
 
-  const content = document.createElement("div");
-  content.textContent = text;
+      <p><strong>Casey — Critic</strong><br>
+        Looks for weaknesses, assumptions and overlooked details.</p>
+    </section>
+  </main>
 
-  box.append(heading, content);
-  chat.append(box);
-  chat.scrollTop = chat.scrollHeight;
+  <script type="module">
+    import { pipeline } from
+      "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
 
-  history.push({ name, text });
-}
+    const MODEL =
+      "onnx-community/SmolLM2-135M-Instruct-ONNX-MHA";
 
-async function loadModel() {
-  $("load").disabled = true;
-  setStatus("Preparing the smaller AI model...");
+    const MAX_HISTORY = 6;
+    const MAX_VISIBLE_MESSAGES = 30;
+    const MAX_TURNS = 9;
 
-  try {
-    const { pipeline, env } =
-      await import(
-        "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1"
-      );
+    let generator = null;
+    let busy = false;
+    let paused = false;
+    let stopped = false;
+    let turn = 0;
 
-    env.useBrowserCache = true;
+    const history = [];
+    const conversation = [];
 
-    ai = await pipeline(
-      "text-generation",
-      MODEL,
+    const people = [
       {
-        dtype: "q8",
-        device: "wasm",
-        progress_callback: data => {
-          if (data.status === "progress" && data.total) {
-            const percent = Math.round(
-              100 * data.loaded / data.total
-            );
+        name: "Alex",
+        role: "Analyst",
+        css: "alex",
+        instruction:
+          "You are Alex, the Analyst. Focus on evidence, logic, " +
+          "clear explanations and practical conclusions."
+      },
+      {
+        name: "Drew",
+        role: "Debater",
+        css: "drew",
+        instruction:
+          "You are Drew, the Debater. Explore opposing viewpoints, " +
+          "challenge assumptions respectfully and offer counterarguments."
+      },
+      {
+        name: "Casey",
+        role: "Critic",
+        css: "casey",
+        instruction:
+          "You are Casey, the Critic. Identify weaknesses, missing " +
+          "details, possible problems and ways to improve ideas."
+      }
+    ];
 
-            $("progress").value = percent;
-            setStatus("Downloading model: " + percent + "%");
-          }
+    const $ = id => document.getElementById(id);
 
-          if (data.status === "initiate") {
-            setStatus("Downloading " + data.file);
+    const status = message => {
+      $("status").textContent = message;
+    };
+
+    function updateButtons() {
+      $("loadButton").disabled = !!generator || busy;
+      $("sendButton").disabled = !generator;
+      $("discussButton").disabled = !generator || busy;
+      $("pauseButton").disabled = !busy;
+      $("stopButton").disabled = !busy;
+    }
+
+    function addMessage(name, message, css) {
+      const chat = $("chat");
+
+      const item = document.createElement("div");
+      item.className = "message " + css;
+
+      const speaker = document.createElement("div");
+      speaker.className = "speaker";
+      speaker.textContent = name;
+
+      const content = document.createElement("div");
+      content.textContent = message;
+
+      item.appendChild(speaker);
+      item.appendChild(content);
+      chat.appendChild(item);
+
+      while (chat.children.length > MAX_VISIBLE_MESSAGES) {
+        chat.removeChild(chat.firstElementChild);
+      }
+
+      chat.scrollTop = chat.scrollHeight;
+
+      conversation.push({
+        name,
+        message
+      });
+    }
+
+    function remember(role, content) {
+      history.push({
+        role,
+        content
+      });
+
+      while (history.length > MAX_HISTORY) {
+        history.shift();
+      }
+    }
+
+    async function loadModel() {
+      if (generator || busy) return;
+
+      busy = true;
+      updateButtons();
+      status("Loading model...");
+
+      try {
+        generator = await pipeline(
+          "text-generation",
+          MODEL,
+          {
+            dtype: "q8",
+            device: "wasm"
           }
+        );
+
+        status("Model loaded. You can start chatting.");
+      } catch (error) {
+        console.error(error);
+        generator = null;
+        status("Model failed to load: " + error.message);
+      } finally {
+        busy = false;
+        updateButtons();
+      }
+    }
+
+    function extractText(result) {
+      if (!result) return "";
+
+      let output = result;
+
+      if (Array.isArray(output)) {
+        output = output[0];
+      }
+
+      if (output && typeof output === "object") {
+        output = output.generated_text ?? output.text ?? "";
+      }
+
+      if (Array.isArray(output)) {
+        const last = output[output.length - 1];
+
+        if (last && typeof last === "object") {
+          output = last.content ?? last.text ?? "";
+        } else {
+          output = last ?? "";
         }
       }
-    );
 
-    setStatus("Model loaded successfully!");
-    $("progress").value = 100;
-    $("start").disabled = false;
-    $("send").disabled = false;
+      if (typeof output === "object" && output !== null) {
+        output = output.content ?? output.text ?? "";
+      }
 
-  } catch (error) {
-    console.error(error);
-    setStatus("Model loading failed: " + error.message);
-    $("load").disabled = false;
-  }
-}
-
-function getContext() {
-  return history.slice(-5)
-    .map(item => item.name + ": " + item.text)
-    .join("\n");
-}
-
-async function generateReply(role) {
-  const messages = [
-    {
-      role: "system",
-      content:
-        role.instruction +
-        " The discussion topic is: " + $("topic").value +
-        ". Be friendly, respectful and concise. Use no more than two short sentences."
-    },
-    {
-      role: "user",
-      content:
-        "Discussion so far:\n" + getContext() +
-        "\nMake your next contribution."
+      return String(output || "").trim();
     }
-  ];
 
-  const result = await ai(messages, {
-    max_new_tokens: 48,
-    do_sample: true,
-    temperature: 0.7,
-    return_full_text: false
-  });
+    async function generateReply(person) {
+      const prompt = [
+        {
+          role: "system",
+          content:
+            person.instruction +
+            " Keep your response concise, useful and respectful. " +
+            "Do not pretend to have personal experiences. " +
+            "Respond directly to the conversation."
+        },
+        ...history.map(item => ({
+          role: item.role,
+          content: item.content
+        }))
+      ];
 
-  let answer = result[0].generated_text;
+      status(person.name + " is thinking...");
 
-  if (Array.isArray(answer)) {
-    answer = answer.at(-1)?.content;
-  }
+      const result = await generator(prompt, {
+        max_new_tokens: 36,
+        do_sample: true,
+        temperature: 0.7,
+        top_p: 0.9,
+        repetition_penalty: 1.1
+      });
 
-  return String(answer || "I couldn't generate a response.").trim();
-}
+      let answer = extractText(result);
 
-async function startDiscussion() {
-  if (!ai || running) return;
+      // Some model pipelines return the whole conversation.
+      if (answer.includes("<|im_start|>assistant")) {
+        answer = answer.split("<|im_start|>assistant").pop();
+      }
 
-  running = true;
-  paused = false;
-  stopped = false;
+      answer = answer
+        .replace(/<\|im_end\|>/g, "")
+        .replace(/<\|endoftext\|>/g, "")
+        .replace(/<\|im_start\|>/g, "")
+        .trim();
 
-  $("start").disabled = true;
-  $("pause").disabled = false;
-  $("stop").disabled = false;
+      if (!answer) {
+        answer = "I couldn't produce a response. Please try again.";
+      }
 
-  while (!stopped && !paused && turn < maxTurns) {
-    const role = roles[turn % roles.length];
+      return answer.slice(0, 1200);
+    }
 
-    setStatus(role.name + " is thinking...");
+    async function oneReply(person) {
+      const answer = await generateReply(person);
 
-    try {
-      const answer = await generateReply(role);
+      addMessage(
+        person.name + " — " + person.role,
+        answer,
+        person.css
+      );
 
-      if (stopped) break;
+      remember("assistant", person.name + ": " + answer);
 
-      addMessage(role.name, answer);
       turn++;
-
-    } catch (error) {
-      setStatus("Reply error: " + error.message);
-      break;
+      status(person.name + " replied.");
     }
-  }
 
-  running = false;
-  $("pause").disabled = true;
-  $("stop").disabled = true;
-  $("start").disabled = false;
+    async function sendMessage() {
+      if (!generator || busy) return;
 
-  if (turn >= maxTurns) {
-    setStatus("Discussion limit reached. Start a new discussion.");
-  } else if (paused) {
-    setStatus("Discussion paused.");
-  } else if (stopped) {
-    setStatus("Discussion stopped.");
-  }
-}
+      const input = $("messageInput");
+      const message = input.value.trim();
 
-$("load").addEventListener("click", loadModel);
-$("start").addEventListener("click", startDiscussion);
+      if (!message) return;
 
-$("pause").addEventListener("click", () => {
-  paused = true;
-  $("pause").disabled = true;
-});
+      input.value = "";
 
-$("stop").addEventListener("click", () => {
-  stopped = true;
-  paused = false;
-});
+      addMessage("You", message, "user");
+      remember("user", message);
 
-$("send").addEventListener("click", () => {
-  const message = $("userMessage").value.trim();
-  if (!message) return;
+      busy = true;
+      paused = false;
+      stopped = false;
+      updateButtons();
 
-  addMessage("You", message);
-  $("userMessage").value = "";
-});
+      try {
+        await oneReply(people[0]);
+      } catch (error) {
+        console.error(error);
+        status("Something went wrong: " + error.message);
+      } finally {
+        busy = false;
+        updateButtons();
+      }
+    }
 
-$("new").addEventListener("click", () => {
-  stopped = true;
-  paused = false;
-  turn = 0;
-  history.length = 0;
-  $("chat").textContent = "New discussion ready.";
-  setStatus(ai ? "Model ready." : "Load the AI model first.");
-});
+    async function startDiscussion() {
+      if (!generator || busy) return;
 
-$("export").addEventListener("click", () => {
-  const text = history.map(
-    item => item.name + ":\n" + item.text
-  ).join("\n\n");
+      busy = true;
+      paused = false;
+      stopped = false;
+      updateButtons();
 
-  const file = new Blob([text], {type: "text/plain"});
-  const url = URL.createObjectURL(file);
-  const link = document.createElement("a");
+      status("The roundtable is starting...");
 
-  link.href = url;
-  link.download = "roundtable-chat.txt";
-  link.click();
+      try {
+        let index = 0;
 
-  URL.revokeObjectURL(url);
-});
+        while (turn < MAX_TURNS && !stopped) {
+          if (paused) {
+            status("Discussion paused.");
+            break;
+          }
 
-$("send").disabled = true;
-</script>
+          const person = people[index % people.length];
+
+          await oneReply(person);
+
+          index++;
+
+          // Briefly yield control to the browser.
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        if (stopped) {
+          status("Discussion stopped.");
+        } else if (!paused && turn >= MAX_TURNS) {
+          status("Discussion finished. Start a new chat to reset the turn limit.");
+        }
+      } catch (error) {
+        console.error(error);
+        status("Something went wrong: " + error.message);
+      } finally {
+        busy = false;
+        updateButtons();
+      }
+    }
+
+    function pauseDiscussion() {
+      if (!busy) return;
+
+      paused = true;
+      status("Pausing after the current AI reply...");
+    }
+
+    function stopDiscussion() {
+      stopped = true;
+      paused = false;
+      status("Stopping after the current AI reply...");
+    }
+
+    function exportConversation() {
+      if (!conversation.length) {
+        status("There is no conversation to export yet.");
+        return;
+      }
+
+      const text = conversation.map(item =>
+        item.name + ":\n" + item.message
+      ).join("\n\n");
+
+      const file = new Blob(
+        [text],
+        { type: "text/plain;charset=utf-8" }
+      );
+
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "ai-roundtable.txt";
+      link.click();
+
+      URL.revokeObjectURL(url);
+      status("Conversation exported.");
+    }
+
+    function newChat() {
+      if (busy) {
+        status("Stop the current discussion before starting a new chat.");
+        return;
+      }
+
+      history.length = 0;
+      conversation.length = 0;
+      turn = 0;
+
+      $("chat").innerHTML = "";
+
+      addMessage(
+        "AI Roundtable",
+        "New conversation started. Send a message to begin.",
+        ""
+      );
+
+      status(generator ? "Ready for a new conversation." : "Load the model first.");
+    }
+
+    $("loadButton").addEventListener("click", loadModel);
+    $("sendButton").addEventListener("click", sendMessage);
+    $("discussButton").addEventListener("click", startDiscussion);
+    $("pauseButton").addEventListener("click", pauseDiscussion);
+    $("stopButton").addEventListener("click", stopDiscussion);
+    $("exportButton").addEventListener("click", exportConversation);
+    $("newChatButton").addEventListener("click", newChat);
+
+    $("messageInput").addEventListener("keydown", event => {
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey
+      ) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    updateButtons();
+  </script>
 </body>
 </html>
