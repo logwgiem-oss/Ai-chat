@@ -2,606 +2,694 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#111827">
-  <title>AI Roundtable</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>AI Roundtable</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<style>
+* { box-sizing: border-box; }
 
-    body {
-      margin: 0;
-      padding: 16px;
-      background: #111827;
-      color: #f9fafb;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+body {
+  margin: 0;
+  padding: 16px;
+  background: #111827;
+  color: #f9fafb;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
-    .app {
-      max-width: 760px;
-      margin: auto;
-    }
+.app {
+  max-width: 760px;
+  margin: auto;
+}
 
-    h1 {
-      text-align: center;
-      margin-bottom: 5px;
-    }
+h1 { text-align: center; }
 
-    .subtitle {
-      text-align: center;
-      color: #9ca3af;
-      margin-top: 0;
-      margin-bottom: 22px;
-    }
+.subtitle {
+  text-align: center;
+  color: #9ca3af;
+}
 
-    .panel {
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 14px;
-    }
+.panel {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 14px;
+  padding: 14px;
+  margin: 14px 0;
+}
 
-    .status {
-      color: #93c5fd;
-      font-size: 14px;
-      min-height: 20px;
-      margin-top: 8px;
-    }
+.small {
+  color: #9ca3af;
+  font-size: 13px;
+  line-height: 1.5;
+}
 
-    button {
-      border: 0;
-      border-radius: 9px;
-      padding: 11px 14px;
-      margin: 4px 3px 4px 0;
-      background: #374151;
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
+.status {
+  color: #93c5fd;
+  font-size: 14px;
+  min-height: 20px;
+  margin-top: 9px;
+}
 
-    button.primary {
-      background: #2563eb;
-    }
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 14px;
+  margin: 4px 3px 4px 0;
+  background: #374151;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
 
-    button.stop {
-      background: #b91c1c;
-    }
+button.primary { background: #2563eb; }
+button.stop { background: #b91c1c; }
 
-    button:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
+button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
 
-    textarea {
-      display: block;
-      width: 100%;
-      min-height: 90px;
-      resize: vertical;
-      background: #111827;
-      border: 1px solid #4b5563;
-      border-radius: 10px;
-      color: white;
-      padding: 12px;
-      font: inherit;
-      font-size: 16px;
-      outline: none;
-    }
+textarea {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  background: #111827;
+  border: 1px solid #4b5563;
+  border-radius: 10px;
+  color: white;
+  padding: 12px;
+  font: inherit;
+  font-size: 16px;
+}
 
-    textarea:focus {
-      border-color: #60a5fa;
-    }
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 80px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
 
-    .chat {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-height: 100px;
-      max-height: 55vh;
-      overflow-y: auto;
-    }
+.message {
+  padding: 12px;
+  border-radius: 10px;
+  background: #374151;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
 
-    .message {
-      padding: 12px;
-      border-radius: 10px;
-      background: #374151;
-      overflow-wrap: anywhere;
-      white-space: pre-wrap;
-    }
+.message.user { background: #1e40af; }
+.message.alex { border-left: 4px solid #60a5fa; }
+.message.drew { border-left: 4px solid #c084fc; }
+.message.casey { border-left: 4px solid #fbbf24; }
 
-    .message.user {
-      background: #1e40af;
-    }
+.speaker {
+  font-weight: 700;
+  margin-bottom: 5px;
+}
 
-    .message.alex {
-      border-left: 4px solid #60a5fa;
-    }
+.typing {
+  color: #bfdbfe;
+}
 
-    .message.drew {
-      border-left: 4px solid #c084fc;
-    }
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
-    .message.casey {
-      border-left: 4px solid #fbbf24;
-    }
-
-    .speaker {
-      font-weight: 700;
-      margin-bottom: 5px;
-    }
-
-    .small {
-      font-size: 13px;
-      color: #9ca3af;
-      line-height: 1.5;
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-  </style>
+.archive-info {
+  margin-bottom: 10px;
+}
+</style>
 </head>
 
 <body>
-  <main class="app">
-    <h1>AI Roundtable</h1>
-    <p class="subtitle">Three AI personalities. One conversation.</p>
+<main class="app">
 
-    <section class="panel">
-      <h3>1. Load the AI model</h3>
-      <p class="small">
-        The model runs in your browser. Its first download may take a while.
-        Keep this page open while it loads.
-      </p>
+<h1>AI Roundtable</h1>
+<p class="subtitle">Three AI personalities. One shared discussion.</p>
 
-      <button class="primary" id="loadButton">
-        Load AI model
-      </button>
+<section class="panel">
+  <h3>1. Load the AI</h3>
+  <p class="small">
+    The model runs in your browser. The first download can take a while.
+  </p>
+  <button class="primary" id="loadButton">Load AI model</button>
+  <div class="status" id="status">Model not loaded.</div>
+</section>
 
-      <div class="status" id="status">Model not loaded.</div>
-    </section>
+<section class="panel">
+  <h3>2. Current conversation</h3>
+  <div class="chat" id="chat">
+    <div class="message">
+      <div class="speaker">AI Roundtable</div>
+      Load the model and send a message to begin.
+    </div>
+  </div>
+</section>
 
-    <section class="panel">
-      <h3>2. Conversation</h3>
-      <div class="chat" id="chat">
-        <div class="message">
-          <div class="speaker">AI Roundtable</div>
-          Load the model, then send a message to begin.
-        </div>
-      </div>
-    </section>
+<section class="panel">
+  <h3>3. Talk to the AIs</h3>
+  <textarea
+    id="messageInput"
+    placeholder="What would you like the AIs to discuss?"
+  ></textarea>
 
-    <section class="panel">
-      <h3>3. Talk to the AIs</h3>
+  <div class="controls">
+    <button class="primary" id="sendButton" disabled>
+      Send message
+    </button>
+    <button id="discussButton" disabled>
+      Give everyone a turn
+    </button>
+    <button id="pauseButton" disabled>Pause</button>
+    <button class="stop" id="stopButton" disabled>Stop</button>
+  </div>
 
-      <textarea
-        id="messageInput"
-        placeholder="Write a message for Alex, Drew and Casey..."
-      ></textarea>
+  <p class="small">
+    Each discussion round gives Alex, Drew and Casey one reply each.
+    Press again to continue.
+  </p>
+</section>
 
-      <div class="controls">
-        <button class="primary" id="sendButton" disabled>
-          Send message
-        </button>
+<section class="panel">
+  <h3>4. Older messages</h3>
+  <p class="small archive-info">
+    Old messages are moved here automatically. They are kept for you
+    to read, but aren't all sent to the AI every time it responds.
+  </p>
 
-        <button id="discussButton" disabled>
-          Start discussion
-        </button>
+  <button id="archiveButton">Show older messages</button>
+  <div id="archive" class="chat"></div>
+</section>
 
-        <button id="pauseButton" disabled>
-          Pause
-        </button>
+<section class="panel">
+  <h3>5. Conversation controls</h3>
+  <div class="controls">
+    <button id="exportButton">Export entire conversation</button>
+    <button id="newChatButton">New conversation</button>
+  </div>
+  <p class="small">
+    Export your conversation to save a copy outside this page.
+  </p>
+</section>
 
-        <button class="stop" id="stopButton" disabled>
-          Stop
-        </button>
-      </div>
-    </section>
+<section class="panel">
+  <h3>Meet the AIs</h3>
+  <p><strong>Alex — Analyst</strong><br>
+  Focuses on evidence, logic and practical details.</p>
 
-    <section class="panel">
-      <h3>4. Chat controls</h3>
+  <p><strong>Drew — Debater</strong><br>
+  Challenges ideas and explores different viewpoints.</p>
 
-      <div class="controls">
-        <button id="exportButton">Export conversation</button>
-        <button id="newChatButton">New conversation</button>
-      </div>
+  <p><strong>Casey — Critic</strong><br>
+  Looks for weaknesses and overlooked details.</p>
+</section>
 
-      <p class="small">
-        The conversation is kept in this page while it is open.
-        Export it if you want to save a copy.
-      </p>
-    </section>
+</main>
 
-    <section class="panel">
-      <h3>Meet the AIs</h3>
-      <p><strong>Alex — Analyst</strong><br>
-        Looks at evidence, logic and practical details.</p>
+<script type="module">
+import {
+  pipeline,
+  TextStreamer
+} from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
 
-      <p><strong>Drew — Debater</strong><br>
-        Challenges ideas and explores alternative viewpoints.</p>
+const MODEL =
+  "onnx-community/SmolLM2-135M-Instruct-ONNX-MHA";
 
-      <p><strong>Casey — Critic</strong><br>
-        Looks for weaknesses, assumptions and overlooked details.</p>
-    </section>
-  </main>
+// Memory limits
+const MAX_HISTORY_MESSAGES = 8;
+const MAX_VISIBLE_MESSAGES = 30;
+const MAX_NEW_TOKENS = 48;
 
-  <script type="module">
-    import { pipeline } from
-      "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
+let generator = null;
+let busy = false;
+let paused = false;
+let stopped = false;
 
-    const MODEL =
-      "onnx-community/SmolLM2-135M-Instruct-ONNX-MHA";
+let currentTopic = "";
+let history = [];
+let exportedConversation = [];
+let archivedMessages = [];
+let archiveVisible = false;
 
-    const MAX_HISTORY = 6;
-    const MAX_VISIBLE_MESSAGES = 30;
-    const MAX_TURNS = 9;
+const people = [
+  {
+    name: "Alex",
+    role: "Analyst",
+    css: "alex",
+    instruction:
+      "You are Alex, the Analyst. Examine the user's topic carefully. " +
+      "Give logical explanations, evidence and practical conclusions. " +
+      "Stay focused on the user's actual question."
+  },
+  {
+    name: "Drew",
+    role: "Debater",
+    css: "drew",
+    instruction:
+      "You are Drew, the Debater. Respond to the user's topic and " +
+      "the other speakers' actual points. Offer a different viewpoint " +
+      "or respectfully challenge an argument. Do not change the subject."
+  },
+  {
+    name: "Casey",
+    role: "Critic",
+    css: "casey",
+    instruction:
+      "You are Casey, the Critic. Examine the user's topic and the " +
+      "other speakers' actual arguments. Identify weaknesses, missing " +
+      "details and ways to improve the discussion. Stay on topic."
+  }
+];
 
-    let generator = null;
-    let busy = false;
-    let paused = false;
-    let stopped = false;
-    let turn = 0;
+const $ = id => document.getElementById(id);
 
-    const history = [];
-    const conversation = [];
+function setStatus(message) {
+  $("status").textContent = message;
+}
 
-    const people = [
+function updateButtons() {
+  $("loadButton").disabled = !!generator || busy;
+  $("sendButton").disabled = !generator || busy;
+  $("discussButton").disabled = !generator || busy;
+  $("pauseButton").disabled = !busy;
+  $("stopButton").disabled = !busy;
+}
+
+function addToHistory(role, content) {
+  history.push({ role, content });
+
+  while (history.length > MAX_HISTORY_MESSAGES) {
+    history.shift();
+  }
+}
+
+function makeMessage(name, message, css) {
+  const item = document.createElement("div");
+  item.className = "message " + css;
+
+  const speaker = document.createElement("div");
+  speaker.className = "speaker";
+  speaker.textContent = name;
+
+  const content = document.createElement("div");
+  content.textContent = message;
+
+  item.appendChild(speaker);
+  item.appendChild(content);
+
+  return { item, content };
+}
+
+function addMessage(name, message, css) {
+  const chat = $("chat");
+  const { item, content } = makeMessage(name, message, css);
+
+  chat.appendChild(item);
+
+  exportedConversation.push({ name, message });
+
+  // Move older messages into the archive instead of deleting them.
+  while (chat.children.length > MAX_VISIBLE_MESSAGES) {
+    const oldItem = chat.firstElementChild;
+
+    const oldName =
+      oldItem.querySelector(".speaker")?.textContent || "Unknown";
+
+    const oldMessage =
+      oldItem.querySelector("div:last-child")?.textContent || "";
+
+    archivedMessages.push({
+      name: oldName,
+      message: oldMessage
+    });
+
+    oldItem.remove();
+  }
+
+  chat.scrollTop = chat.scrollHeight;
+
+  if (archiveVisible) {
+    showArchive();
+  }
+
+  return content;
+}
+
+function showArchive() {
+  const archive = $("archive");
+  archive.innerHTML = "";
+
+  if (!archivedMessages.length) {
+    archive.textContent = "No older messages yet.";
+    return;
+  }
+
+  // Render only when the archive is opened.
+  archivedMessages.forEach(item => {
+    const { item: box } = makeMessage(
+      item.name,
+      item.message,
+      ""
+    );
+    archive.appendChild(box);
+  });
+}
+
+function toggleArchive() {
+  archiveVisible = !archiveVisible;
+
+  $("archive").style.display =
+    archiveVisible ? "flex" : "none";
+
+  $("archiveButton").textContent =
+    archiveVisible ? "Hide older messages" : "Show older messages";
+
+  if (archiveVisible) {
+    showArchive();
+  }
+}
+
+async function loadModel() {
+  if (generator || busy) return;
+
+  busy = true;
+  updateButtons();
+  setStatus("Loading model. Please wait...");
+
+  try {
+    generator = await pipeline(
+      "text-generation",
+      MODEL,
       {
-        name: "Alex",
-        role: "Analyst",
-        css: "alex",
-        instruction:
-          "You are Alex, the Analyst. Focus on evidence, logic, " +
-          "clear explanations and practical conclusions."
-      },
-      {
-        name: "Drew",
-        role: "Debater",
-        css: "drew",
-        instruction:
-          "You are Drew, the Debater. Explore opposing viewpoints, " +
-          "challenge assumptions respectfully and offer counterarguments."
-      },
-      {
-        name: "Casey",
-        role: "Critic",
-        css: "casey",
-        instruction:
-          "You are Casey, the Critic. Identify weaknesses, missing " +
-          "details, possible problems and ways to improve ideas."
+        dtype: "q8",
+        device: "wasm"
       }
-    ];
+    );
 
-    const $ = id => document.getElementById(id);
+    setStatus("Model loaded. Send a message to begin.");
+  } catch (error) {
+    console.error(error);
+    generator = null;
+    setStatus("Could not load model: " + error.message);
+  } finally {
+    busy = false;
+    updateButtons();
+  }
+}
 
-    const status = message => {
-      $("status").textContent = message;
-    };
+function buildPrompt(person) {
+  return [
+    {
+      role: "system",
+      content:
+        person.instruction +
+        "\n\nIMPORTANT RULES:" +
+        "\nThe user's current topic is: " + currentTopic +
+        "\nAnswer the user's topic, not a random subject." +
+        "\nRead the recent conversation before responding." +
+        "\nRefer to another speaker's point when relevant." +
+        "\nNever invent what another speaker said." +
+        "\nKeep your answer clear and fairly short." +
+        "\nIf the user asks a direct question, answer it directly."
+    },
+    ...history.map(item => ({
+      role: item.role,
+      content: item.content
+    }))
+  ];
+}
 
-    function updateButtons() {
-      $("loadButton").disabled = !!generator || busy;
-      $("sendButton").disabled = !generator;
-      $("discussButton").disabled = !generator || busy;
-      $("pauseButton").disabled = !busy;
-      $("stopButton").disabled = !busy;
+function extractText(result) {
+  if (!result) return "";
+
+  let output = Array.isArray(result) ? result[0] : result;
+
+  if (output && typeof output === "object") {
+    output = output.generated_text ?? output.text ?? "";
+  }
+
+  if (Array.isArray(output)) {
+    const last = output[output.length - 1];
+
+    if (last && typeof last === "object") {
+      output = last.content ?? last.text ?? "";
+    } else {
+      output = last ?? "";
     }
+  }
 
-    function addMessage(name, message, css) {
-      const chat = $("chat");
+  if (output && typeof output === "object") {
+    output = output.content ?? output.text ?? "";
+  }
 
-      const item = document.createElement("div");
-      item.className = "message " + css;
+  return String(output || "").trim();
+}
 
-      const speaker = document.createElement("div");
-      speaker.className = "speaker";
-      speaker.textContent = name;
+async function generateReply(person) {
+  const prompt = buildPrompt(person);
 
-      const content = document.createElement("div");
-      content.textContent = message;
+  const outputElement = addMessage(
+    person.name + " — " + person.role,
+    "",
+    person.css
+  );
 
-      item.appendChild(speaker);
-      item.appendChild(content);
-      chat.appendChild(item);
+  outputElement.classList.add("typing");
 
-      while (chat.children.length > MAX_VISIBLE_MESSAGES) {
-        chat.removeChild(chat.firstElementChild);
-      }
+  let streamedText = "";
 
-      chat.scrollTop = chat.scrollHeight;
+  setStatus(person.name + " is typing...");
 
-      conversation.push({
-        name,
-        message
-      });
-    }
+  try {
+    const streamer = new TextStreamer(generator.tokenizer, {
+      skip_prompt: true,
+      skip_special_tokens: true,
 
-    function remember(role, content) {
-      history.push({
-        role,
-        content
-      });
-
-      while (history.length > MAX_HISTORY) {
-        history.shift();
-      }
-    }
-
-    async function loadModel() {
-      if (generator || busy) return;
-
-      busy = true;
-      updateButtons();
-      status("Loading model...");
-
-      try {
-        generator = await pipeline(
-          "text-generation",
-          MODEL,
-          {
-            dtype: "q8",
-            device: "wasm"
-          }
-        );
-
-        status("Model loaded. You can start chatting.");
-      } catch (error) {
-        console.error(error);
-        generator = null;
-        status("Model failed to load: " + error.message);
-      } finally {
-        busy = false;
-        updateButtons();
-      }
-    }
-
-    function extractText(result) {
-      if (!result) return "";
-
-      let output = result;
-
-      if (Array.isArray(output)) {
-        output = output[0];
-      }
-
-      if (output && typeof output === "object") {
-        output = output.generated_text ?? output.text ?? "";
-      }
-
-      if (Array.isArray(output)) {
-        const last = output[output.length - 1];
-
-        if (last && typeof last === "object") {
-          output = last.content ?? last.text ?? "";
-        } else {
-          output = last ?? "";
-        }
-      }
-
-      if (typeof output === "object" && output !== null) {
-        output = output.content ?? output.text ?? "";
-      }
-
-      return String(output || "").trim();
-    }
-
-    async function generateReply(person) {
-      const prompt = [
-        {
-          role: "system",
-          content:
-            person.instruction +
-            " Keep your response concise, useful and respectful. " +
-            "Do not pretend to have personal experiences. " +
-            "Respond directly to the conversation."
-        },
-        ...history.map(item => ({
-          role: item.role,
-          content: item.content
-        }))
-      ];
-
-      status(person.name + " is thinking...");
-
-      const result = await generator(prompt, {
-        max_new_tokens: 36,
-        do_sample: true,
-        temperature: 0.7,
-        top_p: 0.9,
-        repetition_penalty: 1.1
-      });
-
-      let answer = extractText(result);
-
-      // Some model pipelines return the whole conversation.
-      if (answer.includes("<|im_start|>assistant")) {
-        answer = answer.split("<|im_start|>assistant").pop();
-      }
-
-      answer = answer
-        .replace(/<\|im_end\|>/g, "")
-        .replace(/<\|endoftext\|>/g, "")
-        .replace(/<\|im_start\|>/g, "")
-        .trim();
-
-      if (!answer) {
-        answer = "I couldn't produce a response. Please try again.";
-      }
-
-      return answer.slice(0, 1200);
-    }
-
-    async function oneReply(person) {
-      const answer = await generateReply(person);
-
-      addMessage(
-        person.name + " — " + person.role,
-        answer,
-        person.css
-      );
-
-      remember("assistant", person.name + ": " + answer);
-
-      turn++;
-      status(person.name + " replied.");
-    }
-
-    async function sendMessage() {
-      if (!generator || busy) return;
-
-      const input = $("messageInput");
-      const message = input.value.trim();
-
-      if (!message) return;
-
-      input.value = "";
-
-      addMessage("You", message, "user");
-      remember("user", message);
-
-      busy = true;
-      paused = false;
-      stopped = false;
-      updateButtons();
-
-      try {
-        await oneReply(people[0]);
-      } catch (error) {
-        console.error(error);
-        status("Something went wrong: " + error.message);
-      } finally {
-        busy = false;
-        updateButtons();
-      }
-    }
-
-    async function startDiscussion() {
-      if (!generator || busy) return;
-
-      busy = true;
-      paused = false;
-      stopped = false;
-      updateButtons();
-
-      status("The roundtable is starting...");
-
-      try {
-        let index = 0;
-
-        while (turn < MAX_TURNS && !stopped) {
-          if (paused) {
-            status("Discussion paused.");
-            break;
-          }
-
-          const person = people[index % people.length];
-
-          await oneReply(person);
-
-          index++;
-
-          // Briefly yield control to the browser.
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-
-        if (stopped) {
-          status("Discussion stopped.");
-        } else if (!paused && turn >= MAX_TURNS) {
-          status("Discussion finished. Start a new chat to reset the turn limit.");
-        }
-      } catch (error) {
-        console.error(error);
-        status("Something went wrong: " + error.message);
-      } finally {
-        busy = false;
-        updateButtons();
-      }
-    }
-
-    function pauseDiscussion() {
-      if (!busy) return;
-
-      paused = true;
-      status("Pausing after the current AI reply...");
-    }
-
-    function stopDiscussion() {
-      stopped = true;
-      paused = false;
-      status("Stopping after the current AI reply...");
-    }
-
-    function exportConversation() {
-      if (!conversation.length) {
-        status("There is no conversation to export yet.");
-        return;
-      }
-
-      const text = conversation.map(item =>
-        item.name + ":\n" + item.message
-      ).join("\n\n");
-
-      const file = new Blob(
-        [text],
-        { type: "text/plain;charset=utf-8" }
-      );
-
-      const url = URL.createObjectURL(file);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = "ai-roundtable.txt";
-      link.click();
-
-      URL.revokeObjectURL(url);
-      status("Conversation exported.");
-    }
-
-    function newChat() {
-      if (busy) {
-        status("Stop the current discussion before starting a new chat.");
-        return;
-      }
-
-      history.length = 0;
-      conversation.length = 0;
-      turn = 0;
-
-      $("chat").innerHTML = "";
-
-      addMessage(
-        "AI Roundtable",
-        "New conversation started. Send a message to begin.",
-        ""
-      );
-
-      status(generator ? "Ready for a new conversation." : "Load the model first.");
-    }
-
-    $("loadButton").addEventListener("click", loadModel);
-    $("sendButton").addEventListener("click", sendMessage);
-    $("discussButton").addEventListener("click", startDiscussion);
-    $("pauseButton").addEventListener("click", pauseDiscussion);
-    $("stopButton").addEventListener("click", stopDiscussion);
-    $("exportButton").addEventListener("click", exportConversation);
-    $("newChatButton").addEventListener("click", newChat);
-
-    $("messageInput").addEventListener("keydown", event => {
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey
-      ) {
-        event.preventDefault();
-        sendMessage();
+      callback_function: text => {
+        streamedText += text;
+        outputElement.textContent = streamedText;
+        $("chat").scrollTop = $("chat").scrollHeight;
       }
     });
 
+    const result = await generator(prompt, {
+      max_new_tokens: MAX_NEW_TOKENS,
+      do_sample: true,
+      temperature: 0.6,
+      top_p: 0.85,
+      repetition_penalty: 1.15,
+      streamer
+    });
+
+    if (!streamedText.trim()) {
+      streamedText = extractText(result);
+    }
+
+  } catch (error) {
+    console.error(error);
+    outputElement.classList.remove("typing");
+    outputElement.textContent =
+      "I couldn't finish that reply. Please try again.";
+    throw error;
+  }
+
+  streamedText = streamedText
+    .replace(/<\|im_end\|>/g, "")
+    .replace(/<\|endoftext\|>/g, "")
+    .replace(/<\|im_start\|>/g, "")
+    .trim();
+
+  if (!streamedText) {
+    streamedText = "I couldn't produce a response. Please try again.";
+  }
+
+  outputElement.textContent = streamedText;
+  outputElement.classList.remove("typing");
+
+  // Store the reply for the next AI.
+  addToHistory(
+    "assistant",
+    person.name + " said: " + streamedText
+  );
+
+  // Update the exported copy with the finished streamed reply.
+  const last = exportedConversation[exportedConversation.length - 1];
+  if (last) last.message = streamedText;
+
+  setStatus(person.name + " finished replying.");
+
+  return streamedText;
+}
+
+async function sendMessage() {
+  if (!generator || busy) return;
+
+  const input = $("messageInput");
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  input.value = "";
+
+  currentTopic = message;
+
+  addMessage("You", message, "user");
+  addToHistory("user", message);
+
+  busy = true;
+  paused = false;
+  stopped = false;
+  updateButtons();
+
+  try {
+    await generateReply(people[0]);
+  } catch (error) {
+    setStatus("Reply error: " + error.message);
+  } finally {
+    busy = false;
     updateButtons();
-  </script>
+  }
+}
+
+async function startDiscussion() {
+  if (!generator || busy) return;
+
+  if (!currentTopic) {
+    setStatus("Send a message first to choose a topic.");
+    return;
+  }
+
+  busy = true;
+  paused = false;
+  stopped = false;
+  updateButtons();
+
+  setStatus("Starting discussion...");
+
+  try {
+    for (const person of people) {
+      if (stopped || paused) break;
+
+      await generateReply(person);
+
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+
+    if (stopped) {
+      setStatus("Discussion stopped.");
+    } else if (paused) {
+      setStatus("Discussion paused.");
+    } else {
+      setStatus("Everyone has replied. Press again to continue.");
+    }
+
+  } catch (error) {
+    console.error(error);
+    setStatus("Discussion error: " + error.message);
+  } finally {
+    busy = false;
+    updateButtons();
+  }
+}
+
+function pauseDiscussion() {
+  if (!busy) return;
+
+  paused = true;
+  setStatus("Pausing after the current AI reply.");
+}
+
+function stopDiscussion() {
+  stopped = true;
+  paused = false;
+  setStatus("Stopping after the current AI reply.");
+}
+
+function exportConversation() {
+  if (!exportedConversation.length) {
+    setStatus("There is no conversation to export.");
+    return;
+  }
+
+  const text = exportedConversation.map(item =>
+    item.name + ":\n" + item.message
+  ).join("\n\n");
+
+  const file = new Blob(
+    [text],
+    { type: "text/plain;charset=utf-8" }
+  );
+
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "AI-Roundtable.txt";
+  link.click();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setStatus("Entire conversation exported.");
+}
+
+function newChat() {
+  if (busy) {
+    setStatus("Stop the current reply before starting a new chat.");
+    return;
+  }
+
+  history = [];
+  exportedConversation = [];
+  archivedMessages = [];
+  currentTopic = "";
+  archiveVisible = false;
+
+  $("chat").innerHTML = "";
+  $("archive").innerHTML = "";
+  $("archive").style.display = "none";
+
+  $("archiveButton").textContent = "Show older messages";
+
+  addMessage(
+    "AI Roundtable",
+    "New conversation. Send a message to begin.",
+    ""
+  );
+
+  setStatus(
+    generator
+      ? "Ready for a new conversation."
+      : "Load the model first."
+  );
+}
+
+// Event listeners
+$("loadButton").addEventListener("click", loadModel);
+$("sendButton").addEventListener("click", sendMessage);
+$("discussButton").addEventListener("click", startDiscussion);
+$("pauseButton").addEventListener("click", pauseDiscussion);
+$("stopButton").addEventListener("click", stopDiscussion);
+$("exportButton").addEventListener("click", exportConversation);
+$("newChatButton").addEventListener("click", newChat);
+$("archiveButton").addEventListener("click", toggleArchive);
+
+$("messageInput").addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+
+$("archive").style.display = "none";
+
+updateButtons();
+</script>
+
 </body>
 </html>
