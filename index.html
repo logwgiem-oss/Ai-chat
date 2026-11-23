@@ -145,12 +145,6 @@ button:disabled {
   background: #0b0e15;
   border-radius: 10px;
 }
-
-#archive .message {
-  margin-right: 0;
-  margin-left: 0;
-}
-
 </style>
 </head>
 
@@ -161,18 +155,23 @@ button:disabled {
   <p class="subtitle">Three AIs. One ongoing discussion.</p>
 
   <div class="panel">
-    <div id="status" class="status">Loading the AI model...</div>
+    <div id="status" class="status">
+      Preparing the AI model...
+    </div>
     <div class="small">
       Alex — Analyst · Drew — Debater · Casey — Critic
     </div>
   </div>
 
   <div class="panel">
+
     <div id="chat" class="chat"></div>
 
     <div style="margin-top:12px">
-      <textarea id="messageInput"
-        placeholder="Enter a topic or join the discussion..."></textarea>
+      <textarea
+        id="messageInput"
+        placeholder="Enter a topic or join the discussion..."
+      ></textarea>
     </div>
 
     <div>
@@ -194,66 +193,95 @@ button:disabled {
     </div>
 
     <p class="small">
-      Send a message at any time to join in. The AIs will see it
-      when they take their next turns.
+      You can send messages while the AIs are talking.
+      They will include your contribution on their next turns.
     </p>
   </div>
 
   <div class="panel">
-    <button id="archiveButton">Show older messages</button>
-    <button id="exportButton">Export conversation</button>
-    <button id="newChatButton">New chat</button>
+    <button id="archiveButton">
+      Show older messages
+    </button>
+
+    <button id="exportButton">
+      Export conversation
+    </button>
+
+    <button id="newChatButton">
+      New chat
+    </button>
 
     <div id="archive"></div>
   </div>
 
   <p class="small">
-    The discussion runs in this browser. Keep this page open while
-    the AIs are talking. Export your conversation before refreshing
-    or closing the page.
+    This discussion runs in your browser. Keep the page open
+    while the AIs are talking. Export your conversation before
+    refreshing or closing the page.
   </p>
 
 </div>
 
 <script type="module">
+
 import {
   pipeline,
   TextStreamer
 } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
 
-const MODEL =
-  "onnx-community/SmolLM2-135M-Instruct-ONNX-MHA";
 
-const MAX_HISTORY_MESSAGES = 10;
+// ==========================================
+// MODEL SETTINGS
+// ==========================================
+
+const MODEL =
+  "onnx-community/SmolLM2-360M-Instruct-ONNX";
+
+const MAX_HISTORY_MESSAGES = 12;
 const MAX_VISIBLE_MESSAGES = 30;
-const MAX_NEW_TOKENS = 64;
+const MAX_NEW_TOKENS = 72;
+
+
+// ==========================================
+// AI PERSONALITIES
+// ==========================================
 
 const people = [
   {
     name: "Alex — Analyst",
     css: "alex",
     instruction:
-      "You are Alex, the Analyst. Examine the topic carefully. " +
-      "Explain facts, reasons and evidence. Respond to what the " +
-      "other speakers actually said. Do not invent facts."
+      "You are Alex, the Analyst in a group discussion. " +
+      "Your job is to explain ideas clearly, examine evidence, " +
+      "and identify reasons and facts. Respond to what the other " +
+      "speakers actually said. Stay focused on the topic."
   },
+
   {
     name: "Drew — Debater",
     css: "drew",
     instruction:
-      "You are Drew, the Debater. Explore different viewpoints. " +
-      "Challenge or support the other speakers with clear reasons. " +
-      "Stay respectful and relevant to the topic."
+      "You are Drew, the Debater in a group discussion. " +
+      "Your job is to challenge ideas, explore different viewpoints, " +
+      "and disagree when you have a good reason. Respond naturally " +
+      "to the other speakers. Stay focused on the topic."
   },
+
   {
     name: "Casey — Critic",
     css: "casey",
     instruction:
-      "You are Casey, the Critic. Look for weaknesses, missing " +
-      "details and assumptions in the discussion. Offer thoughtful " +
-      "counterpoints. Stay focused on the topic."
+      "You are Casey, the Critic in a group discussion. " +
+      "Your job is to spot weaknesses, question assumptions, " +
+      "and identify missing information. Offer thoughtful criticism " +
+      "without being rude. Stay focused on the topic."
   }
 ];
+
+
+// ==========================================
+// APP STATE
+// ==========================================
 
 let generator = null;
 let modelReady = false;
@@ -278,17 +306,36 @@ const startButton = document.getElementById("startButton");
 const pauseButton = document.getElementById("pauseButton");
 const stopButton = document.getElementById("stopButton");
 
+
+// ==========================================
+// STATUS AND BUTTONS
+// ==========================================
+
 function updateStatus(message) {
   status.textContent = message;
 }
 
 function updateButtons() {
   sendButton.disabled = !modelReady;
-  startButton.disabled = !modelReady || discussionRunning ||
+
+  startButton.disabled =
+    !modelReady ||
+    discussionRunning ||
     history.length === 0;
+
   pauseButton.disabled = !discussionRunning;
   stopButton.disabled = !discussionRunning;
+
+  startButton.textContent =
+    nextSpeaker === 0 && fullConversation.length <= 1
+      ? "Start discussion"
+      : "Resume discussion";
 }
+
+
+// ==========================================
+// MESSAGES
+// ==========================================
 
 function makeMessageElement(speaker, text, css) {
   const element = document.createElement("div");
@@ -304,7 +351,10 @@ function makeMessageElement(speaker, text, css) {
   element.appendChild(heading);
   element.appendChild(content);
 
-  return { element, content };
+  return {
+    element,
+    content
+  };
 }
 
 function addMessage(speaker, text, css, save = true) {
@@ -324,10 +374,16 @@ function addMessage(speaker, text, css, save = true) {
   }
 
   trimChat();
+
   chat.scrollTop = chat.scrollHeight;
 
   return message;
 }
+
+
+// ==========================================
+// ARCHIVE
+// ==========================================
 
 function trimChat() {
   while (chat.children.length > MAX_VISIBLE_MESSAGES) {
@@ -365,20 +421,28 @@ function showArchive() {
     archive.appendChild(message.element);
   }
 
-  archive.style.display =
-    archive.style.display === "block" ? "none" : "block";
+  const opening = archive.style.display !== "block";
+
+  archive.style.display = opening ? "block" : "none";
 
   document.getElementById("archiveButton").textContent =
-    archive.style.display === "block"
+    opening
       ? "Hide older messages"
       : "Show older messages";
 }
 
-function buildPrompt(person) {
-  const recent = history.slice(-MAX_HISTORY_MESSAGES);
 
-  const transcript = recent.map(item => {
-    return item.speaker + ": " + item.text;
+// ==========================================
+// BUILD EACH AI'S PROMPT
+// ==========================================
+
+function buildPrompt(person) {
+
+  const recentMessages =
+    history.slice(-MAX_HISTORY_MESSAGES);
+
+  const transcript = recentMessages.map(item => {
+    return item.speaker + ":\n" + item.text;
   }).join("\n\n");
 
   return [
@@ -386,28 +450,53 @@ function buildPrompt(person) {
       role: "system",
       content:
         person.instruction +
-        "\nYou are taking part in a continuing group conversation." +
-        "\nThe original topic is: " + currentTopic +
-        "\nStay focused on the original topic and any relevant points." +
-        "\nTalk naturally to the other speakers." +
-        "\nDo not pretend to be the user." +
-        "\nDo not invent other people or conversations." +
-        "\nDo not give instructions about editing text or prompts." +
-        "\nAvoid repeating points already made." +
-        "\nWrite a useful reply of around 2 to 4 sentences."
+
+        "\n\nThe original discussion topic is: " +
+        currentTopic +
+
+        "\n\nYou are part of a real group discussion with Alex, Drew, " +
+        "Casey and the user." +
+
+        "\nYou must discuss the original topic, not a different topic." +
+
+        "\nDo not invent meetings, research, websites, people, " +
+        "previous conversations or personal experiences." +
+
+        "\nDo not assume the user wants travel advice or a list of ideas." +
+
+        "\nDo not say 'what would you like to discuss' when a topic " +
+        "has already been provided." +
+
+        "\nRespond directly to the points made by the other speakers." +
+
+        "\nYou may agree, disagree, question, explain or add a new idea." +
+
+        "\nDo not repeat the entire discussion." +
+
+        "\nWrite a natural reply of around 2 to 4 sentences."
     },
+
     {
       role: "user",
       content:
-        "Here is the recent conversation:\n\n" +
+        "Here is the recent group conversation:\n\n" +
+
         transcript +
-        "\n\nIt is now your turn. Continue the discussion naturally. " +
-        "Respond to the actual conversation above."
+
+        "\n\nIt is your turn to speak now. " +
+        "Continue this exact discussion. " +
+        "Respond to something that was actually said."
     }
   ];
 }
 
+
+// ==========================================
+// GENERATE ONE AI REPLY
+// ==========================================
+
 async function generateReply(person) {
+
   let replyText = "";
 
   const message = addMessage(
@@ -419,43 +508,39 @@ async function generateReply(person) {
 
   updateStatus(person.name + " is thinking...");
 
-  const streamer = new TextStreamer(generator.tokenizer, {
-    skip_prompt: true,
-    skip_special_tokens: true,
-    callback_function: (chunk) => {
-      replyText += chunk;
-      message.content.textContent = replyText;
-      chat.scrollTop = chat.scrollHeight;
-    }
-  });
-
   try {
+
     const prompt = buildPrompt(person);
 
-    const result = await generator(prompt, {
+    const streamer = new TextStreamer(
+      generator.tokenizer,
+      {
+        skip_prompt: true,
+        skip_special_tokens: true,
+
+        callback_function: (chunk) => {
+          replyText += chunk;
+
+          message.content.textContent = replyText;
+
+          chat.scrollTop = chat.scrollHeight;
+        }
+      }
+    );
+
+    await generator(prompt, {
       max_new_tokens: MAX_NEW_TOKENS,
       do_sample: true,
-      temperature: 0.7,
+      temperature: 0.65,
       top_p: 0.9,
       repetition_penalty: 1.15,
       streamer
     });
 
-    if (!replyText.trim()) {
-      const generated = result?.[0]?.generated_text;
-
-      if (typeof generated === "string") {
-        replyText = generated;
-      } else if (Array.isArray(generated)) {
-        const last = generated[generated.length - 1];
-        replyText = last?.content || "";
-      }
-    }
-
     replyText = replyText.trim();
 
     if (!replyText) {
-      replyText = "I couldn't produce a reply that time.";
+      throw new Error("The model returned an empty reply.");
     }
 
     message.content.textContent = replyText;
@@ -469,18 +554,37 @@ async function generateReply(person) {
     fullConversation.push(item);
     history.push(item);
 
+    chat.scrollTop = chat.scrollHeight;
+
+    return true;
+
   } catch (error) {
-    message.content.textContent =
-      "Sorry, I couldn't generate a reply. Please try again.";
 
     console.error(error);
-  }
 
-  chat.scrollTop = chat.scrollHeight;
+    message.content.textContent =
+      "I couldn't generate a reply. The discussion has been paused.";
+
+    updateStatus(
+      "There was a generation error. You can try resuming."
+    );
+
+    return false;
+  }
 }
 
+
+// ==========================================
+// AUTOMATIC DISCUSSION LOOP
+// ==========================================
+
 async function runDiscussion() {
-  if (!modelReady || discussionRunning || history.length === 0) {
+
+  if (
+    !modelReady ||
+    discussionRunning ||
+    history.length === 0
+  ) {
     return;
   }
 
@@ -491,116 +595,202 @@ async function runDiscussion() {
   updateStatus("The discussion is running...");
 
   while (discussionRunning && !pauseRequested) {
+
     const person = people[nextSpeaker];
 
-    await generateReply(person);
+    const success = await generateReply(person);
 
-    nextSpeaker = (nextSpeaker + 1) % people.length;
+    if (!success) {
+      break;
+    }
+
+    nextSpeaker =
+      (nextSpeaker + 1) % people.length;
 
     if (pauseRequested) {
       break;
     }
 
-    // A short break between speakers.
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve =>
+      setTimeout(resolve, 500)
+    );
   }
 
   discussionRunning = false;
   pauseRequested = false;
 
   updateButtons();
-  updateStatus("Discussion paused. You can join in or resume.");
+
+  updateStatus(
+    "Discussion paused. You can join in or resume."
+  );
 }
 
+
+// ==========================================
+// USER MESSAGES
+// ==========================================
+
 function addUserMessage() {
+
   const text = messageInput.value.trim();
 
-  if (!text || !modelReady) return;
+  if (!text || !modelReady) {
+    return;
+  }
 
   if (!currentTopic) {
     currentTopic = text;
   }
 
-  addMessage("You", text, "user");
+  addMessage(
+    "You",
+    text,
+    "user"
+  );
 
   messageInput.value = "";
 
   updateStatus(
     discussionRunning
       ? "Your message has been added. The AIs will see it on their next turns."
-      : "Your message has been added. Start the discussion when you're ready."
+      : "Message added. Start the discussion when you're ready."
   );
 
   updateButtons();
 }
 
-sendButton.addEventListener("click", addUserMessage);
+sendButton.addEventListener(
+  "click",
+  addUserMessage
+);
 
-messageInput.addEventListener("keydown", event => {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    addUserMessage();
+messageInput.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+      addUserMessage();
+    }
   }
-});
+);
 
-startButton.addEventListener("click", () => {
-  runDiscussion();
-});
 
-pauseButton.addEventListener("click", () => {
-  pauseRequested = true;
-  updateStatus("Pausing after the current reply...");
-});
+// ==========================================
+// DISCUSSION CONTROLS
+// ==========================================
 
-stopButton.addEventListener("click", () => {
-  pauseRequested = true;
-  updateStatus("Stopping after the current reply...");
-});
+startButton.addEventListener(
+  "click",
+  () => {
+    runDiscussion();
+  }
+);
+
+pauseButton.addEventListener(
+  "click",
+  () => {
+
+    pauseRequested = true;
+
+    updateStatus(
+      "Pausing after the current reply..."
+    );
+  }
+);
+
+stopButton.addEventListener(
+  "click",
+  () => {
+
+    pauseRequested = true;
+
+    updateStatus(
+      "Stopping after the current reply..."
+    );
+  }
+);
+
+
+// ==========================================
+// ARCHIVE BUTTON
+// ==========================================
 
 document.getElementById("archiveButton")
   .addEventListener("click", showArchive);
 
+
+// ==========================================
+// EXPORT CONVERSATION
+// ==========================================
+
 document.getElementById("exportButton")
   .addEventListener("click", () => {
+
     const text = fullConversation.map(item => {
+
       return item.speaker + ":\n" + item.text;
+
     }).join("\n\n");
 
-    const file = new Blob([text], {
-      type: "text/plain;charset=utf-8"
-    });
+    const file = new Blob(
+      [text],
+      {
+        type: "text/plain;charset=utf-8"
+      }
+    );
 
     const url = URL.createObjectURL(file);
+
     const link = document.createElement("a");
 
     link.href = url;
     link.download = "AI-Roundtable-Conversation.txt";
+
     link.click();
 
     URL.revokeObjectURL(url);
   });
 
+
+// ==========================================
+// NEW CHAT
+// ==========================================
+
 document.getElementById("newChatButton")
   .addEventListener("click", () => {
+
     if (discussionRunning) {
-      alert("Pause or stop the discussion before starting a new chat.");
+
+      alert(
+        "Pause the discussion before starting a new chat."
+      );
+
       return;
     }
 
     const confirmed = confirm(
-      "Start a new chat? Export your current conversation first if you want to keep it."
+      "Start a new chat? Export your conversation first if you want to keep it."
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     history = [];
     fullConversation = [];
     archivedMessages = [];
+
     currentTopic = "";
     nextSpeaker = 0;
 
     chat.innerHTML = "";
     archive.innerHTML = "";
+
     archive.style.display = "none";
 
     document.getElementById("archiveButton").textContent =
@@ -608,13 +798,25 @@ document.getElementById("newChatButton")
 
     messageInput.value = "";
 
-    updateStatus("New chat ready. Enter a topic to begin.");
+    updateStatus(
+      "New chat ready. Enter a topic to begin."
+    );
+
     updateButtons();
   });
 
+
+// ==========================================
+// LOAD MODEL
+// ==========================================
+
 async function loadModel() {
+
   try {
-    updateStatus("Loading the AI model. This may take a while...");
+
+    updateStatus(
+      "Loading SmolLM2-360M-Instruct. First load may take a while..."
+    );
 
     generator = await pipeline(
       "text-generation",
@@ -627,15 +829,21 @@ async function loadModel() {
 
     modelReady = true;
 
-    updateStatus("Model ready. Enter a topic to begin.");
+    updateStatus(
+      "SmolLM2-360M is ready. Enter a topic to begin."
+    );
+
     updateButtons();
 
   } catch (error) {
+
     console.error(error);
 
     updateStatus(
-      "The model could not load. Check your internet connection and reload the page."
+      "The model could not load. Safari may not have enough memory, or the download may have failed. Try reloading the page."
     );
+
+    updateButtons();
   }
 }
 
